@@ -1,66 +1,102 @@
-import tkinter as tk
-from tkinter import ttk
+-- Create the main UI
+local Infernium = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Sidebar = Instance.new("Frame")
 
-# Create the main window
-root = tk.Tk()
-root.title("Infernium - Combat Warriors 12b")
-root.geometry("600x400")
-root.configure(bg="#2E1A47")
+-- Sections List
+local sections = {"Player", "Legit", "Rage", "Parry", "ESP", "Sounds", "Changer", "World", "Misc"}
 
-# Sidebar frame (Left Panel)
-sidebar = tk.Frame(root, bg="#1F1230", width=150, height=400)
-sidebar.pack(side="left", fill="y")
+-- Setup UI
+Infernium.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-# Sidebar buttons
-sections = ["Player", "Legit", "Rage", "Parry", "ESP", "Sounds", "Changer", "World", "Misc"]
-for section in sections:
-    btn = tk.Button(sidebar, text=section, bg="#3B245F", fg="white", relief="flat", width=15)
-    btn.pack(pady=5, padx=5)
+MainFrame.Parent = Infernium
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(46, 26, 71) -- Dark purple theme
 
-# Main panel frame (Right Side)
-main_panel = tk.Frame(root, bg="#2E1A47")
-main_panel.pack(side="right", expand=True, fill="both", padx=20, pady=20)
+Sidebar.Parent = MainFrame
+Sidebar.Size = UDim2.new(0, 100, 1, 0)
+Sidebar.BackgroundColor3 = Color3.fromRGB(31, 18, 48)
 
-# Title label
-title_label = tk.Label(main_panel, text="Player", font=("Arial", 16, "bold"), bg="#2E1A47", fg="white")
-title_label.pack(pady=10)
+-- Add Sidebar Buttons
+for _, section in ipairs(sections) do
+    local Button = Instance.new("TextButton")
+    Button.Parent = Sidebar
+    Button.Size = UDim2.new(1, 0, 0, 30)
+    Button.Text = section
+    Button.BackgroundColor3 = Color3.fromRGB(59, 36, 95)
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+end
 
-# Function to update labels with slider values
-def update_values():
-    walk_speed_label.config(text=f"Walk Speed: {walk_speed.get()}")
-    fly_speed_label.config(text=f"Fly Speed: {fly_speed.get()}")
-    fov_label.config(text=f"FOV: {fov.get()}")
+-- Sliders and Toggles
+local function createSlider(name, min, max, default, callback)
+    local Slider = Instance.new("TextLabel")
+    Slider.Parent = MainFrame
+    Slider.Text = name .. ": " .. tostring(default)
+    Slider.Position = UDim2.new(0.3, 0, 0.1 * #MainFrame:GetChildren(), 0)
+    Slider.Size = UDim2.new(0, 150, 0, 30)
+    Slider.BackgroundColor3 = Color3.fromRGB(80, 50, 120)
+    Slider.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-# Walk Speed
-walk_speed = tk.IntVar(value=40)
-walk_speed_label = tk.Label(main_panel, text="Walk Speed: 40", bg="#2E1A47", fg="white")
-walk_speed_label.pack()
-walk_speed_slider = ttk.Scale(main_panel, from_=0, to=100, orient="horizontal", variable=walk_speed, command=lambda e: update_values())
-walk_speed_slider.pack()
+    local SliderBar = Instance.new("TextButton")
+    SliderBar.Parent = Slider
+    SliderBar.Size = UDim2.new(0, 100, 0, 10)
+    SliderBar.Position = UDim2.new(0.1, 0, 1, 0)
+    SliderBar.BackgroundColor3 = Color3.fromRGB(150, 100, 200)
 
-# Fly Toggle
-fly_toggle = tk.BooleanVar()
-fly_toggle_btn = ttk.Checkbutton(main_panel, text="Fly Toggle", variable=fly_toggle)
-fly_toggle_btn.pack()
+    SliderBar.MouseButton1Click:Connect(function()
+        local newValue = math.random(min, max)
+        Slider.Text = name .. ": " .. tostring(newValue)
+        callback(newValue)
+    end)
+end
 
-# Fly Speed
-fly_speed = tk.IntVar(value=50)
-fly_speed_label = tk.Label(main_panel, text="Fly Speed: 50", bg="#2E1A47", fg="white")
-fly_speed_label.pack()
-fly_speed_slider = ttk.Scale(main_panel, from_=0, to=100, orient="horizontal", variable=fly_speed, command=lambda e: update_values())
-fly_speed_slider.pack()
+local function createToggle(name, callback)
+    local Toggle = Instance.new("TextButton")
+    Toggle.Parent = MainFrame
+    Toggle.Text = name .. ": OFF"
+    Toggle.Size = UDim2.new(0, 150, 0, 30)
+    Toggle.Position = UDim2.new(0.3, 0, 0.1 * #MainFrame:GetChildren(), 0)
+    Toggle.BackgroundColor3 = Color3.fromRGB(80, 50, 120)
+    Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-# FOV Toggle
-fov_toggle = tk.BooleanVar()
-fov_toggle_btn = ttk.Checkbutton(main_panel, text="FOV Toggle", variable=fov_toggle)
-fov_toggle_btn.pack()
+    local state = false
+    Toggle.MouseButton1Click:Connect(function()
+        state = not state
+        Toggle.Text = name .. ": " .. (state and "ON" or "OFF")
+        callback(state)
+    end)
+end
 
-# FOV
-fov = tk.IntVar(value=70)
-fov_label = tk.Label(main_panel, text="FOV: 70", bg="#2E1A47", fg="white")
-fov_label.pack()
-fov_slider = ttk.Scale(main_panel, from_=30, to=120, orient="horizontal", variable=fov, command=lambda e: update_values())
-fov_slider.pack()
+-- Adding Sliders
+createSlider("Walk Speed", 10, 100, 40, function(value)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+end)
 
-# Run the application
-root.mainloop()
+createToggle("Fly Toggle", function(state)
+    if state then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Anchored = true
+    else
+        game.Players.LocalPlayer.Character.HumanoidRootPart.Anchored = false
+    end
+end)
+
+createSlider("Fly Speed", 10, 100, 50, function(value)
+    -- Fake fly speed, since flying requires a full fly script
+    print("Fly Speed set to", value)
+end)
+
+createToggle("FOV Toggle", function(state)
+    if state then
+        game.Workspace.CurrentCamera.FieldOfView = 120
+    else
+        game.Workspace.CurrentCamera.FieldOfView = 70
+    end
+end)
+
+createSlider("FOV", 30, 120, 70, function(value)
+    game.Workspace.CurrentCamera.FieldOfView = value
+end)
+
+-- Load UI
+Infernium.Parent = game.CoreGui
